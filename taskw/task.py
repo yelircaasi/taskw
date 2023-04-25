@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+from typing import Dict, Optional, Tuple
 
 from taskw.fields import (
     AnnotationArrayField,
@@ -18,10 +19,10 @@ from taskw.fields import (
 from taskw.fields.base import Dirtyable, DirtyableList, DirtyableDict
 
 # Sentinel value for not specifying a default
-UNSPECIFIED = object()
+UNSPECIFIED: object = object()
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Task(dict):
@@ -64,20 +65,20 @@ class Task(dict):
         'wait': DateField(label='Wait'),
     }
 
-    def __init__(self, data, udas=None):
-        udas = udas or {}
-        self._fields = self.FIELDS.copy()
+    def __init__(self, data: Dict, udas: Optional[Dict] = None) -> None:
+        udas: Optional[Dict] = udas or {}
+        self._fields: Dict[str, object] = self.FIELDS.copy()
         self._fields.update(udas)
-        self._changes = []
+        self._changes: list = []
 
-        processed = {}
+        processed: Dict = {}
         for k, v in data.items():
             processed[k] = self._deserialize(k, v, self._fields)
 
         super(Task, self).__init__(processed)
 
     @classmethod
-    def from_stub(cls, data, udas=None):
+    def from_stub(cls, data: Dict, udas: Optional[Dict] = None) -> "Task":
         """ Create a Task from an already deserialized dict. """
 
         udas = udas or {}
@@ -91,7 +92,7 @@ class Task(dict):
         return cls(processed, udas)
 
     @classmethod
-    def from_input(cls, input_file=sys.stdin, modify=False, udas=None):
+    def from_input(cls, input_file=sys.stdin, modify: bool = False, udas: Optional[Dict] = None):
         """
         Create a Task directly from stdin by reading one line. If modify=True,
         two lines are expected, which is consistent with the Taskwarrior hook
@@ -103,7 +104,7 @@ class Task(dict):
         :param udas: Taskrc udas. Defaults to None.
         :return Task
         """
-        original_task = input_file.readline().strip()
+        original_task: str = input_file.readline().strip()
         if modify:
             modified_task = input_file.readline().strip()
             return cls(json.loads(modified_task), udas=udas)
@@ -144,7 +145,7 @@ class Task(dict):
     def _record_change(self, key, from_, to):
         self._changes.append((key, from_, to))
 
-    def get_changes(self, serialized=False, keep=False):
+    def get_changes(self, serialized: bool = False, keep: bool = False) -> Dict[str, Tuple]:
         """ Get a journal of changes that have occurred
 
         :param `serialized`:
@@ -188,7 +189,7 @@ class Task(dict):
 
         return results
 
-    def update(self, values, force=False):
+    def update(self, values: Dict, force: bool = False) -> Dict[str, bool]:
         """ Update this task dictionary
 
         :returns: A dictionary mapping field names specified to be updated
@@ -200,18 +201,18 @@ class Task(dict):
             results[k] = self.__setitem__(k, v, force=force)
         return results
 
-    def set(self, key, value):
+    def set(self, key, value) -> bool:
         """ Set a key's value regardless of whether a change is seen."""
         return self.__setitem__(key, value, force=True)
 
-    def serialized(self):
+    def serialized(self) -> Dict:
         """ Returns a serialized representation of this task."""
         serialized = {}
         for k, v in self.items():
             serialized[k] = self._serialize(k, v, self._fields)
         return serialized
 
-    def serialized_changes(self, keep=False):
+    def serialized_changes(self, keep=False) -> Dict:
         serialized = {}
         for k, v in self.get_changes(keep=keep).items():
             # Here, `v` is a 2-tuple of the field's original value
@@ -220,7 +221,7 @@ class Task(dict):
             serialized[k] = self._serialize(k, to, self._fields)
         return serialized
 
-    def __setitem__(self, key, value, force=False):
+    def __setitem__(self, key, value, force=False) -> bool:
         if isinstance(value, dict) and not isinstance(value, DirtyableDict):
             value = DirtyableDict(value)
         elif isinstance(value, list) and not isinstance(value, DirtyableList):

@@ -14,7 +14,7 @@ from distutils.version import LooseVersion
 DATE_FORMAT = '%Y%m%dT%H%M%SZ'
 
 
-encode_replacements = OrderedDict([
+encode_replacements: OrderedDict[str, str] = OrderedDict([
     ('\\', '\\\\'),
     ('\"', '&dquot;'),
     ('"', '&dquot;'),
@@ -24,14 +24,14 @@ encode_replacements = OrderedDict([
     ('/', '\\/'),
 ])
 
-encode_replacements_experimental = OrderedDict([
+encode_replacements_experimental: OrderedDict[str, str] = OrderedDict([
     ('\"', '&dquot;'),
     ('"', '&dquot;'),
     ('[', '&open;'),
     (']', '&close;'),
 ])
 
-decode_replacements = OrderedDict([
+decode_replacements: OrderedDict[str, str] = OrderedDict([
     [v, k] for k, v in encode_replacements.items()
     if k not in ('\n')  # We skip these.
 ])
